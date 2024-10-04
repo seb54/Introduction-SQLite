@@ -1,0 +1,6 @@
+client_id,nom,prenom,email,date_inscription,commande_id,produit,date_commande
+1,Simpson,Homer,homer.simpson@springfield.com,01 octobre 2023,1,Laptop,03 octobre 2023
+1,Simpson,Homer,homer.simpson@springfield.com,01 octobre 2023,3,Laptop,03 octobre 2023
+2,Simpson,Marge,marge.simpson@springfield.com,02 octobre 2023,4,Smartphone,04 octobre 2023
+3,Simpson,Bart,bart.simpson@springfield.com,01 octobre 2023,,,
+4,Simpson,Lisa,lisa.simpson@springfield.com,02 octobre 2023,,,
