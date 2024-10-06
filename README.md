@@ -41,7 +41,7 @@ sqlite3 --version
 - Cinq clients et 10 commandes sont ajoutés à la base de données.
 
 ### 3. Manipulation des données et requêtes
-- Ce script permet d'effectuer diverses opérations sur la base de données :
+- Ces scripts permettent d'effectuer diverses opérations sur la base de données :
   - **Sélectionner tous les clients** (`etape4A.py`)
   - **Récupérer les commandes d'un client spécifique** (`etape4B.py`)
   - **Mettre à jour l'adresse e-mail d'un client** (`etape4C.py`)
