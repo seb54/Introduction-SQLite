@@ -23,48 +23,48 @@ def connect_to_database(db_path):
     except sqlite3.Error as e:
         raise ConnectionError(f"Échec de la connexion à la base de données : {e}")
 
-def afficher_commandes_client(conn, client_id):
+def ajouter_commandes(conn):
     """
-    Affiche les commandes pour un client spécifique.
+    Ajoute une dizaine de commandes à la base de données.
     
     Paramètres :
     conn (sqlite3.Connection) : Objet de connexion à la base de données SQLite.
-    client_id (int) : L'ID du client pour lequel les commandes doivent être récupérées.
     """
+    commandes = [
+        (1, 'Produit A', '2024-10-01'),
+        (2, 'Produit B', '2024-10-02'),
+        (3, 'Produit C', '2024-10-03'),
+        (4, 'Produit D', '2024-10-04'),
+        (5, 'Produit E', '2024-10-05'),
+        (6, 'Produit F', '2024-10-06'),
+        (7, 'Produit G', '2024-10-07'),
+        (8, 'Produit H', '2024-10-08'),
+        (9, 'Produit I', '2024-10-09'),
+        (10, 'Produit J', '2024-10-10')
+    ]
     cursor = conn.cursor()
     try:
-        # Sélectionner toutes les commandes pour ce client spécifique
-        cursor.execute('''
-            SELECT Commandes.id, Commandes.produit, Commandes.date_commande
-            FROM Commandes
-            WHERE Commandes.client_id = ?
-        ''', (client_id,))
-
-        commandes = cursor.fetchall()
-
-        # Vérifier si des commandes existent pour ce client
-        if commandes:
-            print(f"Commandes pour le client ID {client_id} :")
-            for commande in commandes:
-                print(f"ID Commande: {commande[0]}, Produit: {commande[1]}, Date: {commande[2]}")
-        else:
-            print(f"Aucune commande trouvée pour le client ID {client_id}.")
+        cursor.executemany('''
+            INSERT INTO Commandes (client_id, produit, date_commande)
+            VALUES (?, ?, ?)
+        ''', commandes)
+        conn.commit()
+        logging.info("Dix commandes ont été ajoutées avec succès.")
     except sqlite3.Error as e:
-        raise RuntimeError(f"Échec de la récupération des commandes : {e}")
+        raise RuntimeError(f"Échec de l'ajout des commandes : {e}")
     finally:
         cursor.close()
 
 def main():
     """
-    Fonction principale pour gérer la connexion à la base de données et l'affichage des commandes pour un client spécifique.
+    Fonction principale pour gérer la connexion à la base de données et l'ajout de commandes.
     """
     db_path = '../bdd/db.sqlite'
     
     try:
         # Se connecter à la base de données
         with connect_to_database(db_path) as conn:
-            client_id = int(input("Entrez l'ID du client pour lequel vous souhaitez récupérer les commandes : "))
-            afficher_commandes_client(conn, client_id)
+            ajouter_commandes(conn)
     except (ConnectionError, RuntimeError) as e:
         logging.error(f"Erreur : {e}")
     except Exception as e:

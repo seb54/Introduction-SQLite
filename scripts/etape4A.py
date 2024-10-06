@@ -1,31 +1,69 @@
 import sqlite3
-import locale
-from datetime import datetime
+import os
+import logging
+from datetime import date, datetime
 
-# Définir la locale en français
-locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Connexion à la base de données
-conn = sqlite3.connect('../bdd/db.sqlite')
-
-# Création d'un curseur pour interagir avec la base de données
-cursor = conn.cursor()
-
-# Sélectionner tous les clients
-cursor.execute('SELECT * FROM Clients')
-
-# Récupérer toutes les lignes (tous les clients)
-clients = cursor.fetchall()
-
-# Afficher chaque client
-for client in clients:
-    # Conversion de la date au format datetime (en supposant que client[4] est une chaîne de caractères au format 'YYYY-MM-DD')
-    date_inscription = datetime.strptime(client[4], '%Y-%m-%d')
+def connect_to_database(db_path):
+    """
+    Établit une connexion à la base de données SQLite.
     
-    # Formater la date en français
-    date_inscription_fr = date_inscription.strftime('%A %d %B %Y')
+    Paramètres :
+    db_path (str) : Le chemin vers le fichier de la base de données SQLite.
     
-    print(f"ID: {client[0]}, Nom: {client[1]}, Prénom: {client[2]}, Email: {client[3]}, Date d'inscription: {date_inscription_fr}")
+    Retourne :
+    sqlite3.Connection : Objet de connexion à la base de données SQLite.
+    """
+    if not os.path.exists(os.path.dirname(db_path)):
+        os.makedirs(os.path.dirname(db_path))
+    try:
+        conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        logging.info("Connexion à la base de données établie avec succès.")
+        return conn
+    except sqlite3.Error as e:
+        raise ConnectionError(f"Échec de la connexion à la base de données : {e}")
 
-# Fermeture de la connexion
-conn.close()
+def afficher_clients(conn):
+    """
+    Affiche les informations des clients.
+    
+    Paramètres :
+    conn (sqlite3.Connection) : Objet de connexion à la base de données SQLite.
+    """
+    cursor = conn.cursor()
+    try:
+        # Sélectionner tous les clients
+        cursor.execute('SELECT * FROM Clients')
+        clients = cursor.fetchall()
+        
+        # Afficher chaque client
+        for client in clients:
+            date_inscription = client[4] if isinstance(client[4], (date, datetime)) else None
+
+            if date_inscription:
+                print(f"ID: {client[0]}, Nom: {client[1]}, Prénom: {client[2]}, Email: {client[3]}, Date d'inscription: {date_inscription}")
+            else:
+                print(f"ID: {client[0]}, Nom: {client[1]}, Prénom: {client[2]}, Email: {client[3]}, Date d'inscription: Non disponible")
+    except sqlite3.Error as e:
+        raise RuntimeError(f"Échec de la récupération des clients : {e}")
+    finally:
+        cursor.close()
+
+def main():
+    """
+    Fonction principale pour gérer la connexion à la base de données et l'affichage des clients.
+    """
+    db_path = '../bdd/db.sqlite'
+    
+    try:
+        # Se connecter à la base de données et afficher les clients
+        with connect_to_database(db_path) as conn:
+            afficher_clients(conn)
+    except (ConnectionError, RuntimeError) as e:
+        logging.error(f"Erreur : {e}")
+    except Exception as e:
+        logging.critical(f"Une erreur inattendue est survenue : {e}")
+
+if __name__ == "__main__":
+    main()

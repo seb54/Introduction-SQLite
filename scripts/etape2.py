@@ -1,37 +1,85 @@
 import sqlite3
+import os
+import logging
 
-# Connexion à la base de données (le fichier sera créé s'il n'existe pas)
-conn = sqlite3.connect('../bdd/db.sqlite')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Création d'un curseur pour interagir avec la base de données
-cursor = conn.cursor()
+def connect_to_database(db_path):
+    """
+    Établit une connexion à la base de données SQLite.
+    
+    Paramètres :
+    db_path (str) : Le chemin vers le fichier de la base de données SQLite.
+    
+    Retourne :
+    sqlite3.Connection : Objet de connexion à la base de données SQLite.
+    """
+    if not os.path.exists(os.path.dirname(db_path)):
+        os.makedirs(os.path.dirname(db_path))
+    try:
+        conn = sqlite3.connect(db_path)
+        logging.info("Connexion à la base de données établie avec succès.")
+        return conn
+    except sqlite3.Error as e:
+        raise ConnectionError(f"Échec de la connexion à la base de données : {e}")
 
-# Création de la table Clients
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Clients (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nom TEXT NOT NULL,
-        prenom TEXT NOT NULL,
-        email TEXT NOT NULL,
-        date_inscription DATE
-    )
-''')
+def create_tables(conn):
+    """
+    Crée les tables Clients et Commandes dans la base de données si elles n'existent pas déjà.
+    
+    Paramètres :
+    conn (sqlite3.Connection) : Objet de connexion à la base de données SQLite.
+    """
+    cursor = conn.cursor()
+    try:
+        # Création de la table Clients
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Clients (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT NOT NULL,
+                prenom TEXT NOT NULL,
+                email TEXT NOT NULL,
+                date_inscription DATE
+            )
+        ''')
+        logging.info("Table 'Clients' créée ou déjà existante.")
+        
+        # Création de la table Commandes avec clé étrangère client_id
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Commandes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER,
+                produit TEXT NOT NULL,
+                date_commande DATE,
+                FOREIGN KEY (client_id) REFERENCES Clients(id)
+            )
+        ''')
+        logging.info("Table 'Commandes' créée ou déjà existante.")
+    except sqlite3.Error as e:
+        raise RuntimeError(f"Échec de la création des tables : {e}")
 
-# Création de la table Commandes avec clé étrangère client_id
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS Commandes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_id INTEGER,
-        produit TEXT NOT NULL,
-        date_commande DATE,
-        FOREIGN KEY (client_id) REFERENCES Clients(id)
-    )
-''')
+def main():
+    """
+    Fonction principale pour gérer la création des tables dans la base de données.
+    """
+    db_path = '../bdd/db.sqlite'
+    
+    try:
+        # Étape 1 : Se connecter à la base de données
+        with connect_to_database(db_path) as conn:
+            # Étape 2 : Créer les tables Clients et Commandes
+            create_tables(conn)
+            
+            # Étape 3 : Enregistrer les changements
+            conn.commit()
+            logging.info("Tables 'Clients' et 'Commandes' créées avec succès.")
+            print("Tables 'Clients' et 'Commandes' créées avec succès.")
+    except (ConnectionError, RuntimeError) as e:
+        logging.error(f"Erreur : {e}")
+        print(f"Erreur : {e}")
+    except Exception as e:
+        logging.critical(f"Une erreur inattendue est survenue : {e}")
+        print(f"Une erreur inattendue est survenue : {e}")
 
-# Enregistrement des changements
-conn.commit()
-
-# Fermeture de la connexion
-conn.close()
-
-print("Tables 'Clients' et 'Commandes' créées avec succès.")
+if __name__ == "__main__":
+    main()
