@@ -18,7 +18,7 @@ def connect_to_database(db_path):
     if not os.path.exists(os.path.dirname(db_path)):
         os.makedirs(os.path.dirname(db_path))
     try:
-        conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = sqlite3.connect(db_path)
         logging.info("Connexion à la base de données établie avec succès.")
         return conn
     except sqlite3.Error as e:

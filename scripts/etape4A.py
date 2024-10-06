@@ -5,6 +5,18 @@ from datetime import date, datetime
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Définir une fonction de conversion pour les dates
+def adapt_date(dt):
+    return dt.strftime('%Y-%m-%d')
+
+def convert_date(s):
+    return datetime.strptime(s.decode(), '%Y-%m-%d')
+
+# Enregistrer les adaptateurs et convertisseurs pour sqlite3
+sqlite3.register_adapter(date, adapt_date)
+sqlite3.register_adapter(datetime, adapt_date)
+sqlite3.register_converter("date", convert_date)
+
 def connect_to_database(db_path):
     """
     Établit une connexion à la base de données SQLite.
@@ -18,6 +30,7 @@ def connect_to_database(db_path):
     if not os.path.exists(os.path.dirname(db_path)):
         os.makedirs(os.path.dirname(db_path))
     try:
+        # Ajoutez detect_types=sqlite3.PARSE_DECLTYPES pour détecter les types enregistrés
         conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
         logging.info("Connexion à la base de données établie avec succès.")
         return conn
@@ -42,9 +55,12 @@ def afficher_clients(conn):
             date_inscription = client[4] if isinstance(client[4], (date, datetime)) else None
 
             if date_inscription:
-                print(f"ID: {client[0]}, Nom: {client[1]}, Prénom: {client[2]}, Email: {client[3]}, Date d'inscription: {date_inscription}")
+                # Formatter pour ne montrer que la partie date
+                date_str = date_inscription.strftime('%Y-%m-%d')
+                print(f"ID: {client[0]}, Nom: {client[1]}, Prénom: {client[2]}, Email: {client[3]}, Date d'inscription: {date_str}")
             else:
                 print(f"ID: {client[0]}, Nom: {client[1]}, Prénom: {client[2]}, Email: {client[3]}, Date d'inscription: Non disponible")
+
     except sqlite3.Error as e:
         raise RuntimeError(f"Échec de la récupération des clients : {e}")
     finally:
